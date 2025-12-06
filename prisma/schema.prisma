@@ -1,14 +1,82 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  universityId String
+  university University @relation(fields: [universityId], references: [id])
+  program String
+  year Int
+}
+
+model University {
+  id         String   @id @default(uuid())
+  name       String
+  slug       String   @unique
+  buildings  Building[]
+  photos     Photo[]
+  users      User[]
+}
+
+model Building {
+  id            String   @id @default(uuid())
+  name          String
+  universityId  String
+  university    University @relation(fields: [universityId], references: [id])
+  studySpots    StudySpot[]
+  lectureHalls  LectureHall[]
+  photos        Photo[]
+}
+
+model StudySpot {
+  id            String   @id @default(uuid())
+  name          String
+  buildingId    String
+  building      Building @relation(fields: [buildingId], references: [id])
+  location      String
+  description   String
+  features      String[] // ["Wifi", "Cafe", "Power Outlets", "Accessible"]
+	noiseLevel    String   // "Quiet", "Moderate", "Loud"
+	spaceType     String?  // "Group Study Room", "Independent Study Room", "Media Lab/Studio", "Meeting and presentation Space"  
+  photos        Photo[]
+}
+
+model LectureHall {
+  id             String     @id @default(uuid())
+  buildingId     String
+  building       Building   @relation(fields: [buildingId], references: [id])
+  room           String
+  hasAvInputs    Boolean
+  hasPc          Boolean
+  hasWhiteboard  Boolean
+  hasProjector   Boolean
+  photos         Photo[]
+}
+
+model Photo {
+  id              String   @id @default(uuid())
+  storagePath     String   // Path in Supabase Storage: "universities/uni-id/photos/photo.jpg"
+	url             String   // Public URL from Supabase
+  caption         String?
+  
+  uploadedAt      DateTime @default(now()) // Polymorphic relations - photo can belong to any entity
+  universityId    String?
+  university      University? @relation(fields: [universityId], references: [id])
+  
+  buildingId      String?
+  building        Building? @relation(fields: [buildingId], references: [id])
+  
+  studySpotId     String?
+  studySpot       StudySpot? @relation(fields: [studySpotId], references: [id])
+  
+  lectureHallId   String?
+  lectureHall     LectureHall? @relation(fields: [lectureHallId], references: [id])
 }
